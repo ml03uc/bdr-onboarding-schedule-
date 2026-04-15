@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 1 BDR Onboarding - Alternative Payments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ap-brand:#2B2D42;--ap-primary:#2B2D6B;--ap-primary-hover:#1F2155;
+    --ap-primary-light:#F3EEFF;--ap-accent:#7C5CFC;--ap-gold:#C5A338;
+    --ap-white:#FFFFFF;--ap-off-white:#F8FAFC;--ap-surface:#F1F5F9;
+    --ap-text:#2B2D42;--ap-body:#334155;--ap-muted:#94A3B8;
+    --ap-border:#E2E8F0;--ap-border-md:#CBD5E1;
+    --ap-shadow:0px 1px 2px 0px rgba(36,104,147,0.04);
+    --ap-shadow-hover:0px 4px 4px -1px rgba(36,104,147,0.04);
+    --ap-shadow-header:0px 4px 8px 0px rgba(36,104,147,0.04);
+    --ap-font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:var(--ap-font);background:var(--ap-off-white);color:var(--ap-body);min-height:100vh;}
+  #root{padding:32px;}
+  @media(max-width:768px){#root{padding:16px;}}
+
+  @media print {
+    body{background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:11px;}
+    #root{padding:8px;}
+    .no-print{display:none!important;}
+    .schedule-grid{gap:6px!important;}
+    .header-bar{padding:12px 16px!important;margin-bottom:12px!important;}
+    .header-bar h1{font-size:18px!important;}
+    .rep-info-bar{padding:10px 16px!important;margin-bottom:12px!important;}
+    .footer-bar{margin-top:12px!important;padding:10px 16px!important;}
+    input[type="text"]{border:none!important;border-bottom:1px solid #ccc!important;background:transparent!important;box-shadow:none!important;}
+    .day-col{break-inside:avoid;}
+    .s-card{break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const {useState,useEffect,useCallback} = React;
+
+const STORE_KEY = "ap-bdr-onboarding-w1";
+
+const SESSIONS = [
+  {day:"mon",date:"Apr 13",dayName:"Monday",sessions:[
+    {id:"mon-1",time:"9:30 - 9:45 AM",title:"BDR Morning Huddle",type:"standup",label:"Daily Standup"},
+    {id:"mon-lunch",type:"lunch"},
+    {id:"mon-2",time:"1:00 - 2:00 PM",title:"ALT PAY - General Introduction",type:"onboarding",label:"Onboarding"},
+    {id:"mon-3",time:"2:30 - 3:30 PM",title:"MSP Workflow Introduction",type:"onboarding",label:"Onboarding"},
+    {id:"mon-4",time:"4:00 - 5:00 PM",title:"PSA + Accounting Systems",type:"onboarding",label:"Onboarding"},
+  ]},
+  {day:"tue",date:"Apr 14",dayName:"Tuesday",sessions:[
+    {id:"tue-1",time:"9:30 - 10:30 AM",title:"Vertical Competitor Training",type:"onboarding",label:"Onboarding"},
+    {id:"tue-2",time:"10:30 - 11:00 AM",title:"Vertical Competitor Quiz",type:"assessment",label:"Assessment"},
+    {id:"tue-3",time:"11:00 AM - 12:00 PM",title:"Apollo Call Recordings",type:"listening",label:"Listening Lab"},
+    {id:"tue-lunch",type:"lunch"},
+    {id:"tue-4",time:"1:00 - 2:00 PM",title:"Horizontal Competitor Training",type:"onboarding",label:"Onboarding"},
+    {id:"tue-5",time:"2:00 - 2:30 PM",title:"Horizontal Competitor Quiz",type:"assessment",label:"Assessment"},
+    {id:"tue-6",time:"3:00 - 4:00 PM",title:"Apollo Call Recordings",type:"listening",label:"Listening Lab"},
+    {id:"tue-7",time:"4:00 - 5:00 PM",title:"WorkRamp Training Modules",type:"self-paced",label:"Self-Paced"},
+  ]},
+  {day:"wed",date:"Apr 15",dayName:"Wednesday",sessions:[
+    {id:"wed-1",time:"9:30 - 10:30 AM",title:"Sandler Call Methodology",type:"onboarding",label:"Onboarding"},
+    {id:"wed-2",time:"11:00 AM - 12:00 PM",title:"Apollo Introduction",type:"onboarding",label:"Onboarding"},
+    {id:"wed-lunch",type:"lunch"},
+    {id:"wed-3",time:"1:00 - 2:00 PM",title:"Create Value Prop / Call Opener + Apollo Recordings",type:"workshop",label:"Workshop"},
+    {id:"wed-4",time:"2:00 - 3:00 PM",title:"Apollo Deep Dive",type:"onboarding",label:"Onboarding"},
+  ]},
+  {day:"thu",date:"Apr 16",dayName:"Thursday",sessions:[
+    {id:"thu-1",time:"9:30 - 10:30 AM",title:"Avarra / Coaching Session",type:"coaching",label:"Coaching"},
+    {id:"thu-2",time:"10:30 AM - 12:00 PM",title:"Lead List - Understanding ICP Accounts",type:"onboarding",label:"Onboarding"},
+    {id:"thu-lunch",type:"lunch"},
+    {id:"thu-3",time:"1:00 - 2:00 PM",title:"MSP + Ecosystems Review",type:"onboarding",label:"Onboarding"},
+    {id:"thu-4",time:"4:00 - 5:00 PM",title:"Trellus Practice Bots",type:"practice",label:"Practice"},
+  ]},
+  {day:"fri",date:"Apr 17",dayName:"Friday",sessions:[
+    {id:"fri-1",time:"9:30 - 9:45 AM",title:"BDR Morning Huddle",type:"standup",label:"Daily Standup"},
+    {id:"fri-2",time:"9:30 - 10:30 AM",title:"Avarra / Coaching Session",type:"coaching",label:"Coaching"},
+    {id:"fri-3",time:"11:00 - 11:45 AM",title:"Salesforce + Exit Criteria",type:"onboarding",label:"Onboarding"},
+    {id:"fri-lunch",type:"lunch"},
+    {id:"fri-4",time:"1:00 - 2:00 PM",title:"Trellus / Avarra Practice Roleplay",type:"practice",label:"Practice"},
+    {id:"fri-5",time:"4:00 - 4:30 PM",title:"Week 1 Recap w/ Esther",type:"review",label:"Review"},
+    {id:"fri-6",time:"4:30 - 5:00 PM",title:"Prospecting / Pre for Week 2",type:"prep",label:"Prep"},
+  ]},
+];
+
+const TOTAL_SESSIONS = SESSIONS.reduce((a,d) => a + d.sessions.filter(s => s.type !== "lunch").length, 0);
+
+const DAY_COLORS = {mon:"#2B2D6B",tue:"#7C5CFC",wed:"#C5A338",thu:"#10B981",fri:"#3B82F6"};
+
+const TYPE_STYLES = {
+  onboarding:{bg:"#DBEAFE",color:"#1E40AF"},
+  standup:{bg:"#F1F5F9",color:"#334155",border:"#E2E8F0"},
+  assessment:{bg:"#FEE2E2",color:"#991B1B"},
+  listening:{bg:"#F3EEFF",color:"#5B21B6"},
+  "self-paced":{bg:"#FEF3C7",color:"#92400E"},
+  workshop:{bg:"#FFF7ED",color:"#9A3412"},
+  coaching:{bg:"#D1FAE5",color:"#065F46"},
+  practice:{bg:"#ECFDF5",color:"#047857"},
+  review:{bg:"#F0F9FF",color:"#0369A1"},
+  prep:{bg:"#F1F5F9",color:"#334155"},
+};
+
+function makeId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+
+function newSchedule(){return{id:makeId(),repName:"",startDate:"",managerBuddy:"",cohort:"",dris:{},createdAt:new Date().toISOString()};}
+
+function loadAll(){try{const d=localStorage.getItem(STORE_KEY);return d?JSON.parse(d):[];}catch(e){return[];}}
+function saveAll(data){try{localStorage.setItem(STORE_KEY,JSON.stringify(data));}catch(e){console.error(e);}}
+
+function Logo(){
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 36" style={{height:24}}>
+      <text x="0" y="26" fontFamily="Inter,-apple-system,BlinkMacSystemFont,sans-serif" fontSize="22" fontWeight="700" fill="#2B2D42">alternative</text>
+      <text x="155" y="26" fontFamily="Inter,-apple-system,BlinkMacSystemFont,sans-serif" fontSize="22" fontWeight="400" fill="#2B2D42">payments</text>
+    </svg>
+  );
+}
+
+function Badge({type,label}){
+  const s=TYPE_STYLES[type]||TYPE_STYLES.prep;
+  return <span style={{display:"inline-block",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:0.3,padding:"2px 8px",borderRadius:9999,background:s.bg,color:s.color,border:s.border?`1px solid ${s.border}`:"none"}}>{label}</span>;
+}
+
+function Card({session,day,dri,onDri}){
+  if(session.type==="lunch") return <div style={{textAlign:"center",padding:6,fontSize:10,fontWeight:500,color:"#94A3B8",fontStyle:"italic",background:"repeating-linear-gradient(45deg,transparent,transparent 4px,#F1F5F9 4px,#F1F5F9 8px)",borderRadius:6}}>12:00 - 1:00 PM - Lunch</div>;
+
+  const [hover,setHover]=useState(false);
+  return (
+    <div className="s-card" style={{background:hover?"#F3EEFF":"#F8FAFC",borderRadius:8,padding:"10px 12px",borderLeft:`3px solid ${DAY_COLORS[day]}`,transition:"background 0.15s"}}
+      onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>
+      <div style={{display:"flex",alignItems:"center",gap:4,fontSize:11,fontWeight:600,color:"#94A3B8",marginBottom:3}}>
+        <span style={{width:6,height:6,borderRadius:"50%",background:DAY_COLORS[day],display:"inline-block"}}/>
+        {session.time}
+      </div>
+      <div style={{fontSize:12.5,fontWeight:600,lineHeight:1.35,marginBottom:4,color:"#2B2D42"}}>{session.title}</div>
+      <Badge type={session.type} label={session.label}/>
+      <div style={{marginTop:6,borderTop:"1px dashed #E2E8F0",paddingTop:5,display:"flex",alignItems:"center",gap:6}}>
+        <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:0.5,color:"#2B2D6B",flexShrink:0}}>DRI</label>
+        <input type="text" value={dri||""} onChange={e=>onDri(session.id,e.target.value)} placeholder="Assign..."
+          style={{border:"none",borderBottom:"1.5px solid #E2E8F0",width:"100%",minHeight:20,fontSize:12,fontWeight:500,padding:"2px 2px",color:"#2B2D42",fontFamily:"inherit",background:"transparent",outline:"none"}}
+          onFocus={e=>e.target.style.borderBottomColor="#7C5CFC"}
+          onBlur={e=>e.target.style.borderBottomColor="#E2E8F0"}/>
+      </div>
+    </div>
+  );
+}
+
+function Schedule({schedule,onUpdate,onBack}){
+  const upd=useCallback((f,v)=>onUpdate({...schedule,[f]:v}),[schedule,onUpdate]);
+  const upDri=useCallback((sid,v)=>onUpdate({...schedule,dris:{...schedule.dris,[sid]:v}}),[schedule,onUpdate]);
+
+  const iStyle={border:"none",borderBottom:"2px solid #2B2D42",minWidth:160,padding:"4px 2px",fontSize:14,fontWeight:500,minHeight:26,color:"#2B2D42",fontFamily:"inherit",background:"transparent",outline:"none"};
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="header-bar" style={{background:"linear-gradient(135deg,#2B2D42 0%,#1A1B2E 100%)",color:"white",padding:"24px 32px",borderRadius:16,marginBottom:24,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16,boxShadow:"0px 4px 8px 0px rgba(36,104,147,0.04)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:20}}>
+          <div style={{background:"white",borderRadius:6,padding:"6px 12px",display:"flex",alignItems:"center"}}><Logo/></div>
+          <div>
+            <h1 style={{fontSize:22,fontWeight:700,letterSpacing:-0.3,margin:0}}><span style={{color:"#C5A338"}}>Week 1</span> BDR Onboarding Schedule</h1>
+            <div style={{fontSize:13,opacity:0.7,marginTop:4}}>BDR Enablement Program</div>
+          </div>
+        </div>
+        <button className="no-print" onClick={()=>window.print()} style={{background:"rgba(255,255,255,0.15)",color:"white",border:"1px solid rgba(255,255,255,0.3)",padding:"8px 16px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Print / PDF</button>
+      </div>
+
+      {/* Back */}
+      <button className="no-print" onClick={onBack} style={{background:"none",border:"1px solid #CBD5E1",borderRadius:8,padding:"8px 16px",fontSize:13,fontWeight:600,color:"#334155",cursor:"pointer",fontFamily:"inherit",marginBottom:16}}
+        onMouseEnter={e=>e.currentTarget.style.background="#F1F5F9"}
+        onMouseLeave={e=>e.currentTarget.style.background="none"}>
+        &#8592; All Schedules
+      </button>
+
+      {/* Rep info */}
+      <div className="rep-info-bar" style={{background:"white",border:"1px solid #E2E8F0",borderRadius:12,padding:"16px 24px",marginBottom:24,display:"flex",gap:32,flexWrap:"wrap",alignItems:"flex-end",boxShadow:"0px 1px 2px 0px rgba(36,104,147,0.04)"}}>
+        {[{k:"repName",l:"New Rep Name",ph:"Enter name..."},{k:"startDate",l:"Start Date",ph:"e.g. April 13, 2026"},{k:"managerBuddy",l:"Manager / Buddy",ph:"Enter name..."},{k:"cohort",l:"Cohort",ph:"e.g. Cohort 4"}].map(f=>
+          <div key={f.k} style={{display:"flex",flexDirection:"column",gap:4}}>
+            <label style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:0.5,color:"#94A3B8"}}>{f.l}</label>
+            <input type="text" value={schedule[f.k]} onChange={e=>upd(f.k,e.target.value)} placeholder={f.ph} style={iStyle}
+              onFocus={e=>e.target.style.borderBottomColor="#7C5CFC"}
+              onBlur={e=>e.target.style.borderBottomColor="#2B2D42"}/>
+          </div>
+        )}
+      </div>
+
+      {/* Legend */}
+      <div className="no-print" style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:20}}>
+        {[["onboarding","Onboarding"],["assessment","Assessment"],["coaching","Coaching"],["workshop","Workshop"],["listening","Listening"],["practice","Practice"]].map(([t,l])=>
+          <Badge key={t} type={t} label={l}/>
+        )}
+      </div>
+
+      {/* Grid */}
+      <div className="schedule-grid" style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}}>
+        {SESSIONS.map(dd=>
+          <div key={dd.day} className="day-col" style={{background:"white",borderRadius:12,border:"1px solid #E2E8F0",overflow:"hidden",boxShadow:"0px 1px 2px 0px rgba(36,104,147,0.04)"}}>
+            <div style={{padding:"10px 14px",fontWeight:700,fontSize:13,textTransform:"uppercase",letterSpacing:0.5,color:"white",display:"flex",justifyContent:"space-between",alignItems:"center",background:DAY_COLORS[dd.day]}}>
+              <span>{dd.dayName}</span><span style={{fontWeight:500,fontSize:11,opacity:0.9}}>{dd.date}</span>
+            </div>
+            <div style={{padding:8,display:"flex",flexDirection:"column",gap:6}}>
+              {dd.sessions.map(s=><Card key={s.id} session={s} day={dd.day} dri={schedule.dris[s.id]} onDri={upDri}/>)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="footer-bar" style={{marginTop:24,padding:"16px 24px",background:"white",borderRadius:12,border:"1px solid #E2E8F0",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:16,fontSize:12,color:"#94A3B8",boxShadow:"0px 1px 2px 0px rgba(36,104,147,0.04)"}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:700,color:"#2B2D42",marginBottom:4}}>Notes</div>
+          <div>All sessions sourced from the BDR Onboarding calendar - Created by Steve Hayes</div>
+          <div style={{marginTop:4}}>DRI = Directly Responsible Individual - this person owns prep, delivery, and follow-up.</div>
+        </div>
+        <div style={{display:"flex",gap:16,flexWrap:"wrap",alignItems:"center"}}>
+          {Object.entries(DAY_COLORS).map(([d,c])=>
+            <div key={d} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:500,color:"#334155"}}>
+              <span style={{width:10,height:10,borderRadius:3,background:c,display:"inline-block"}}/>
+              {d.charAt(0).toUpperCase()+d.slice(1)}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function List({schedules,onSelect,onCreate,onDelete}){
+  const driCount=s=>Object.values(s.dris).filter(v=>v&&v.trim()).length;
+
+  return (
+    <div>
+      <div className="header-bar" style={{background:"linear-gradient(135deg,#2B2D42 0%,#1A1B2E 100%)",color:"white",padding:"24px 32px",borderRadius:16,marginBottom:32,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16,boxShadow:"0px 4px 8px 0px rgba(36,104,147,0.04)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:20}}>
+          <div style={{background:"white",borderRadius:6,padding:"6px 12px",display:"flex",alignItems:"center"}}><Logo/></div>
+          <div>
+            <h1 style={{fontSize:22,fontWeight:700,letterSpacing:-0.3,margin:0}}><span style={{color:"#C5A338"}}>Week 1</span> BDR Onboarding Schedules</h1>
+            <div style={{fontSize:13,opacity:0.7,marginTop:4}}>BDR Enablement Program - Schedule per rep</div>
+          </div>
+        </div>
+        <button onClick={onCreate} style={{background:"#2B2D6B",color:"white",border:"none",padding:"12px 24px",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",transition:"all 0.2s"}}
+          onMouseEnter={e=>{e.currentTarget.style.background="#1F2155";e.currentTarget.style.transform="translateY(-1px)";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="#2B2D6B";e.currentTarget.style.transform="none";}}>
+          + New Rep Schedule
+        </button>
+      </div>
+
+      {schedules.length===0?(
+        <div style={{textAlign:"center",padding:"64px 24px",background:"white",borderRadius:12,border:"1px solid #E2E8F0"}}>
+          <div style={{fontSize:48,marginBottom:16}}>📋</div>
+          <div style={{fontSize:18,fontWeight:600,color:"#2B2D42",marginBottom:8}}>No schedules yet</div>
+          <div style={{fontSize:14,color:"#94A3B8",marginBottom:24}}>Create a copy of the Week 1 schedule for each new BDR joining the team.</div>
+          <button onClick={onCreate} style={{background:"#2B2D6B",color:"white",border:"none",padding:"12px 24px",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>+ Create First Schedule</button>
+        </div>
+      ):(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:16}}>
+          {schedules.map(s=>{
+            const dc=driCount(s);
+            const pct=Math.round((dc/TOTAL_SESSIONS)*100);
+            return (
+              <div key={s.id} style={{background:"white",borderRadius:12,border:"1px solid #E2E8F0",overflow:"hidden",cursor:"pointer",boxShadow:"0px 1px 2px 0px rgba(36,104,147,0.04)",transition:"box-shadow 0.2s,transform 0.2s"}}
+                onMouseEnter={e=>{e.currentTarget.style.boxShadow="0px 4px 12px 0px rgba(36,104,147,0.08)";e.currentTarget.style.transform="translateY(-2px)";}}
+                onMouseLeave={e=>{e.currentTarget.style.boxShadow="0px 1px 2px 0px rgba(36,104,147,0.04)";e.currentTarget.style.transform="none";}}>
+                <div onClick={()=>onSelect(s.id)} style={{padding:"20px 24px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+                    <div style={{fontSize:17,fontWeight:700,color:"#2B2D42"}}>{s.repName||"Unnamed Rep"}</div>
+                    <div style={{fontSize:11,fontWeight:600,color:"#94A3B8",background:"#F1F5F9",padding:"2px 8px",borderRadius:9999,flexShrink:0}}>Week 1</div>
+                  </div>
+                  <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:12,color:"#64748B",marginBottom:12}}>
+                    {s.startDate&&<span>Start: {s.startDate}</span>}
+                    {s.cohort&&<span>Cohort: {s.cohort}</span>}
+                    {s.managerBuddy&&<span>Buddy: {s.managerBuddy}</span>}
+                  </div>
+                  <div style={{marginBottom:4,fontSize:11,fontWeight:600,color:"#94A3B8",display:"flex",justifyContent:"space-between"}}>
+                    <span>DRIs Assigned</span><span>{dc} / {TOTAL_SESSIONS}</span>
+                  </div>
+                  <div style={{height:6,background:"#F1F5F9",borderRadius:9999,overflow:"hidden"}}>
+                    <div style={{height:"100%",background:dc===TOTAL_SESSIONS?"#10B981":"#2B2D6B",borderRadius:9999,width:`${pct}%`,transition:"width 0.3s"}}/>
+                  </div>
+                </div>
+                <div style={{borderTop:"1px solid #E2E8F0",padding:"10px 24px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <button onClick={()=>onSelect(s.id)} style={{background:"none",border:"none",color:"#2B2D6B",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",padding:0}}>Open →</button>
+                  <button onClick={e=>{e.stopPropagation();if(confirm("Delete schedule for "+(s.repName||"Unnamed Rep")+"?"))onDelete(s.id);}}
+                    style={{background:"none",border:"none",color:"#94A3B8",fontSize:12,cursor:"pointer",fontFamily:"inherit",padding:0}}
+                    onMouseEnter={e=>e.currentTarget.style.color="#EF4444"}
+                    onMouseLeave={e=>e.currentTarget.style.color="#94A3B8"}>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function App(){
+  const [schedules,setSchedules]=useState(()=>loadAll());
+  const [activeId,setActiveId]=useState(null);
+
+  useEffect(()=>{saveAll(schedules);},[schedules]);
+
+  const handleCreate=useCallback(()=>{
+    const s=newSchedule();
+    setSchedules(prev=>[...prev,s]);
+    setActiveId(s.id);
+  },[]);
+
+  const handleUpdate=useCallback(updated=>{
+    setSchedules(prev=>prev.map(s=>s.id===updated.id?updated:s));
+  },[]);
+
+  const handleDelete=useCallback(id=>{
+    setSchedules(prev=>prev.filter(s=>s.id!==id));
+    setActiveId(prev=>prev===id?null:prev);
+  },[]);
+
+  const active=schedules.find(s=>s.id===activeId);
+
+  return (
+    <div style={{maxWidth:active?"none":1200,margin:"0 auto"}}>
+      {active?(
+        <Schedule schedule={active} onUpdate={handleUpdate} onBack={()=>setActiveId(null)}/>
+      ):(
+        <List schedules={schedules} onSelect={setActiveId} onCreate={handleCreate} onDelete={handleDelete}/>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
